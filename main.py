@@ -11,7 +11,19 @@ files = st.file_uploader("Upload CSV or Excel", type=["csv", "xlxs"], accept_mul
 if files:
     for file in files:
         ext = file.name.split(".")[-1]
-        df = pd.read_csv(file) if ext == "csv" else pd.read_excel(file)
+        try:
+            if ext == "csv":
+                df = pd.read_csv(file, encoding="utf-8")
+            else:
+                df = pd.read_excel(file)
+        except UnicodeDecodeError:
+            file.seek(0)
+            try:
+                df = pd.read_csv(file, encoding="ISO-8859-1")
+            except Exception as e:
+                st.error(f"❌ Failed to read file {file.name}: {e}")
+                continue
+
 
         st.subheader(f"🔍 {file.name} - preview")
         st.dataframe(df.head())
